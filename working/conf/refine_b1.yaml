@@ -1,0 +1,51 @@
+prefix: refine_b1
+
+ckpt_path: 'models/effnet_b1_tf_efficientnet_b1_ns/fold0_best_score.pth'
+
+seed: 1071
+
+pseudo_label: true
+
+interpolation: 4
+rotate_limit: 0
+crop_scale_min: 0.8
+
+loss_type: 'focal'
+focal_loss_gamma: 0.5
+
+backbone_model_name: 'tf_efficientnet_b1_ns'
+pooling: 'gem'
+gemp_p: 4.0
+gemp_learn_p: false
+act_layer: 'swish'
+
+triplet_attention: true
+triplet_kernel_size: 13
+
+train_bs: 14
+valid_bs: 28
+num_workers: 7
+
+#mixup: true
+#mixup_alpha: 1.0
+
+target_only: true
+
+train_trans_mode: 'flip_justresize'
+valid_trans_mode: 'justresize'
+
+scale_height: 768
+scale_width: 768
+input_height: 768
+input_width: 768
+
+optimizer: 'madgrad'
+lr: 1e-4
+min_lr: 1e-7
+weight_decay: 0.
+momentum: 0.9
+
+epochs: 10
+warmup_epochs: 0
+T_0: 10
+scheduler: 'LinearWarmupCosineAnnealingWarmRestarts'
