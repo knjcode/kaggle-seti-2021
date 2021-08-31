@@ -8,14 +8,14 @@
 Best submission was an emsemble of four EfficientNets with [Convolutional Triplet Attention Module](https://arxiv.org/abs/2010.03045).
 
 
-### Validation and Preprocess
+## Validation and Preprocess
 
 - Use new train data only
 - StratifiedKFold(k=5)
 - Use ON-channels only (819x256) and resize (768x768)
 
 
-### Model Architecture
+## Model Architecture
 
 Backbone -> Triplet Attention -> GeM Pooling -> FC
 
@@ -27,12 +27,40 @@ Backbone -> Triplet Attention -> GeM Pooling -> FC
 - To accelerate the training, replace Swish to ReLU (B3 and B4 only)
 
 
-### Training
+## Training
+
+The training process consists of three stages
+
+### Stage 0
+
+This model will not be used for the final submission.
+
+Training EfficientNet-B4
 
 - 60epochs DDP AMP
 - Focal Loss (gamma=0.5)
 - [MADGRAD](https://github.com/facebookresearch/madgrad) optimizer
-  - Initial Lr 1e-4 LinearWarmupCosineAnnealingLR (warmup_epochs=5)
+  - Initial Lr 1e-2 LinearWarmupCosineAnnealingLR (warmup_epochs=1)
+- Mixup (alpha=1.0)
+  - If the target of either data is 1, mixed_target will also be set to 1
+- Data Augmentation
+  - Horizontal and Vertical flip (p=0.5)
+  - ShiftScaleRotate (shift_limit=0.2, scale_limit=0.2, rotate_limit=0)
+  - RandomResizedCrop (scale=[0.8,1.0], ratio=[0.75,1.333])
+
+Generate Pseudo labels from oof prediction of this model from new test set.  
+(Select 5,000 images each of positive and negative data with high confidence)
+
+### Stage 1
+
+Training EfficientNet-B1,B2,B3 and B4 by adding pseudo labeled images.
+
+The training settings are almost the same as stage0.
+
+- 60epochs DDP AMP
+- Focal Loss (gamma=0.5)
+- [MADGRAD](https://github.com/facebookresearch/madgrad) optimizer
+  - Initial Lr 1e-2 or 1e-3 LinearWarmupCosineAnnealingLR (warmup_epochs=5)
 - Mixup (alpha=1.0)
   - If the target of either data is 1, mixed_target will also be set to 1
 - Data Augmentation
@@ -41,9 +69,11 @@ Backbone -> Triplet Attention -> GeM Pooling -> FC
   - RandomResizedCrop (scale=[0.8,1.0], ratio=[0.75,1.333])
 
 
-### Refine, Pseudo Labeling and TTA
+### Stage2
 
-I refined the model by adding pseudo labeled 5,000 images each of positive and negative data with high confidence from new test set.
+Refine stage1 models and generate submission with TTA
+
+I refined the model with lighter data augmentation than stage1 for 10epochs.
 
 - 10epochs DDP AMP
 - Focal Loss (gamma=0.5)
