@@ -104,6 +104,21 @@ The `submission.csv` is the final prediction result.
 
 Use docker, to reproduce model.
 
+### Build docker image
+
+```
+$ cd kaggle-seti-2021/working
+$ docker image build -t seti .
+```
+
+### Run docker container
+
+```
+$ cd kaggle-seti-2021
+$ docker run --gpus all -it --privileged --ipc=host --net=host --security-opt seccomp=unconfined -v $PWD:/work seti bash
+# cd /work/working
+```
+
 ### Setup localhost.txt
 
 Create localhost.txt for horovod ddp training.
@@ -116,15 +131,7 @@ $ cat localhost.txt
 localhost port=22 cpu=8
 ```
 
-### Run docker container
-
-```
-$ cd kaggle-seti-2021
-$ docker run --gpus all -it --privileged --ipc=host --net=host --security-opt seccomp=unconfined -v $PWD:/work seti bash
-# cd /work/working
-```
-
-### Generate pseudo labels (optional)
+### Stage0 generate pseudo labels (optional)
 
 To create a pseudo label, train a model.  
 (You can also skip this step and use the files included in the repository.)
@@ -142,11 +149,9 @@ To create a pseudo label, train a model.
 # python gen_pseudo_label.py models/efficientnet_b4_tf_efficientnet_b4_ns/new_test.csv pseudo_test_labels.csv
 ```
 
-### Train models
+### Stage1 train models
 
 After the creation of the `pseudo_test_labels.csv` is complete, we will train the final model.
-
-#### First stage model training
 
 ```
 # bash horovod_train.sh localhost.txt 8 -c conf/train_b1.yaml
@@ -159,7 +164,7 @@ After the creation of the `pseudo_test_labels.csv` is complete, we will train th
 ... wait a few hours
 ```
 
-#### Second stage model training
+### Stage2 refine models
 
 ```
 # bash horovod_train.sh localhost.txt 8 -c conf/refine_b1.yaml
